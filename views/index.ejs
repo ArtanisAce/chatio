@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>ChatIO</title>   
+        <link rel="stylesheet" type="text/css" href="/style.css">
+
+	</head>
+	<body>
+        <h1>ChatIO</h1>
+		<div id="container">
+			<div id="namesWrapper">
+                <div id="namesWindow">		
+				<p>Create Username:</p>
+				<form id="usernameForm">
+					<input size="35" id="username">
+					<input type="submit" value="Submit">
+				</form>
+			</div>
+
+			<div id="mainWrapper">
+				<div id="chatWrapper">
+					<div id="chatWindow"></div>
+                    <h2>Messages</h2>
+					<form id="messageForm">
+						<input size="35" id="message" placeholder="Type Something...">
+						<input type="submit" value="Say It!">
+					</form>
+				</div>
+
+				<div id="userWrapper">
+                    <h3>Users</h3>
+					<div id="users"></div>
+                    
+				</div>
+			</div>
+		</div>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+             $(function(){
+                var socket = io.connect(),
+                $usernameForm = $('#usernameForm'),
+                $username = $('#username'),
+                $users = $('#users'),
+                $messageForm = $('#messageForm'),
+				$message = $('#message'),
+				$chat = $('#chatWindow');
+                
+				$usernameForm.submit(function(e){
+					e.preventDefault();
+					socket.emit('new user', $username.val(), function(data){
+						if(data){
+							//$('#namesWrapper').hide();
+							$('#mainWrapper').show();
+						} else {
+							alert("Username already exists!");
+						}
+					});
+					$username.val('');
+				});
+                
+				socket.on('register user', function(data){
+					var html = '';
+					for(i = 0; i < data.length; i++){
+						html += data[i] + '<br>';
+					}
+					$users.html(html);
+				});
+                
+                //Send the message written on the text box
+                //eventlistener in the index.js file will handle it               
+                $messageForm.submit(function(e){
+					e.preventDefault();
+					socket.emit('send message', $message.val());
+					$message.val('');//reset the message input box
+				});
+                
+                
+                //Eventlistener waiting for the new message emitted
+                //to display on the messagebox
+                socket.on('new message',function(data){
+                    $chat.append('<strong>'+ data.user +'</strong>: '+data.msg+'<br>'+data.timestamp+'<br>');
+                });            
+                
+             });   
+            </script>
+	</body>
+</html>
